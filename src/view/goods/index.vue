@@ -21,9 +21,11 @@
       <div
         class="googsBuyTips"
       >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;中国光华科技基金会“精准扶贫-大病救助项目”以贫困青少年大病家庭为救助主体，通过医疗救助、生活补助等形式，对罹患胃癌（Ⅰ、Ⅱ期）、慢乙肝、慢粒白血病、先天性心脏病、乳腺癌、宫颈癌的贫困病患予以救助</div>
-      <div class="buyBtnWrap" type="danger" @click="buy">
-        <p>立即购买</p>
-      </div>
+    <van-goods-action>
+      <van-goods-action-button type="danger" @click="buy">
+        立即购买
+      </van-goods-action-button>
+    </van-goods-action>
     </div>
   </div>
 </template>
