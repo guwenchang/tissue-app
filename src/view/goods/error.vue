@@ -7,7 +7,7 @@
             <img src="../../../image/false.png" alt />
           </div>
           <div class="successText">出错信息</div>
-          <div class="successTips">请使用微信扫码</div>
+          <div class="successTips">{{ msg }}</div>
         </div>
       </div>
     </div>
@@ -15,7 +15,18 @@
 </template>
 
 <script>
-/* ... */
+export default {
+  data() {
+    return {
+      msg: '请使用微信'
+    };
+  },
+  created() {
+    if (this.$route.query.msg) {
+      this.msg = this.$route.query.msg
+    }
+  }
+}
 </script>
 
 <style>
