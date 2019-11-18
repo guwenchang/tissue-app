@@ -4,7 +4,6 @@
       <div class="goodsPicker">
         <img :src="goods.productImg" />
       </div>
-
       <div class="goodsText">
         <div class="goodsName">
           {{ goods.title }}
@@ -38,6 +37,7 @@
 
 <script>
 import {
+  Dialog,
   Tab,
   Tabs,
   Tag,
@@ -71,31 +71,46 @@ export default {
       goods: {
         title: "手帕纸",
         price: 0,
-        productImg: "https://img.yzcdn.cn/public_files/2017/10/24/e5a5a02309a41f9f5def56684808d9ae.jpeg"
+        productImg: "https://static.iweichan.com/goods.png"
       },
+      deviceId: undefined,
+      openId: undefined,
       product: {}
     };
   },
   created() {
-    this.$http.get(api.productInfo,{
-          params: {                           //参数
-            deviceId: 'qwewqedsa2132321'
-          },
-        }).then(res => {                   //请求成功后的处理函数     
-          this.product = res.data.data
-          if ((this.product.dryWipesCount > 0 && this.product.wetWipesCount > 0) || this.product.dryWipesCount > 0) {
-            this.wipeType = "1"
-            this.goods.price = this.product.dryWipesPrice
-          }else if (this.product.wetWipesCount > 0) {
-            this.wipeType = "2"
-            this.goods.price = this.product.wetWipesPrice
-          }else{
-            this.canNotBuy = true;
-          }
-        }).catch(err => {                 //请求失败后的处理函数   
-          console.log(err)
-        })
-
+    if (this.$route.query.deviceId) {
+      this.deviceId = this.$route.query.deviceId
+    }
+    if (this.$route.query.openId) {
+      this.openId = this.$route.query.openId
+    }
+    if (!this.openId) {
+      this.$router.push({
+        path: 'error',
+        query: { msg : '请使用微信扫描' }
+      });
+    }
+    if (this.deviceId) {
+      this.$http.get(api.productInfo,{
+        params: {                           //参数
+          deviceId: this.deviceId
+        },
+      }).then(res => {                   //请求成功后的处理函数     
+        this.product = res.data.data
+        if ((this.product.dryWipesCount > 0 && this.product.wetWipesCount > 0) || this.product.dryWipesCount > 0) {
+          this.wipeType = "1"
+          this.goods.price = this.product.dryWipesPrice
+        }else if (this.product.wetWipesCount > 0) {
+          this.wipeType = "2"
+          this.goods.price = this.product.wetWipesPrice
+        }else{
+          this.canNotBuy = true;
+        }
+      }).catch(err => {                 //请求失败后的处理函数   
+        console.log(err)
+      })
+    }
     // if (!this.isWeChat()) {
     //   this.$router.push({
     //     path: 'error',
@@ -116,9 +131,65 @@ export default {
       return "¥" + (this.goods.price);
     },
     buy() {
-
-      
-      this.$router.push("paySuccess");
+      this.$http.post(api.wxPay,{
+        deviceId: this.deviceId,
+        openId: this.openId,
+        wipeType: this.wipeType
+      }).then(res => {    
+        if (res.data.code !== 0 ) {
+            Dialog.alert({
+              message: '下单失败'
+            }).then(() => {
+              // on close
+            });
+        }              
+         //请求成功后的处理函数     
+        activePay(res.data.data)
+      }).catch(err => {                 //请求失败后的处理函数   
+        console.log(err)
+      })
+    },
+    activePay (args) {
+      if (typeof WeixinJSBridge == "undefined") {
+        if ( document.addEventListener ) {
+          document.addEventListener('WeixinJSBridgeReady', onBridgeReady(args), false);
+        } else if (document.attachEvent) {
+          document.attachEvent('WeixinJSBridgeReady', onBridgeReady(args)); 
+          document.attachEvent('onWeixinJSBridgeReady', onBridgeReady(args));
+        }
+      } else {
+        onBridgeReady(args);
+      }
+    },
+    onBridgeReady(args){
+      WeixinJSBridge.invoke(
+        'getBrandWCPayRequest', {
+          "appId": args.appId,     //公众号名称，由商户传入     
+          "timeStamp": args.timeStamp,         //时间戳，自1970年以来的秒数     
+          "nonceStr": args.nonceStr, //随机串     
+          "package": args.package,     
+          "signType": args.signType,         //微信签名方式：     
+          "paySign": args.paySign //微信签名 
+        },
+        function (res) {
+          if(res.err_msg == "get_brand_wcpay_request:ok" ) {
+            // 付款成功
+            this.$router.push("paySuccess");
+          } else if (res.err_msg == "get_brand_wcpay_request:cancel" ) {
+            Dialog.alert({
+              message: '已取消支付'
+            }).then(() => {
+              // on close
+            });
+          } else {
+            Dialog.alert({
+              message: '支付失败'
+            }).then(() => {
+              // on close
+            });
+          }
+        }
+      ); 
     },
     wipeTypeChange (name, title) {
       console.log(name)

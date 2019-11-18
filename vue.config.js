@@ -2,7 +2,7 @@ const autoprefixer = require('autoprefixer');
 const pxtorem = require('postcss-pxtorem');
 
 module.exports = {
-  outputDir: 'docs',
+  outputDir: 'dist',
   publicPath: process.env.NODE_ENV === 'production' ? '/vant-demo/' : '/',
   css: {
     loaderOptions: {
@@ -19,7 +19,7 @@ module.exports = {
   },
   devServer: {
     // development server port 8000
-    port: 8000,
+    port: 8001,
     proxy: {
       '/api': {
         target: 'http://localhost:8090/',
